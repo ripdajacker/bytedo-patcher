@@ -1,25 +1,52 @@
 #!/usr/bin/env python3
-"""Query the MS-XUSBI 2.2.8.5 device-ID vendor request from all attached
-8BitDo devices (VID 0x2DC8): bmRequestType=0xC0 bRequest=0x01 wValue=0 wIndex=0 wLength=4.
-Run:  sudo python3 xusb_id.py   (or ensure write access to /dev/bus/usb/...)
+
+"""Query the USB device for the XUSB ID.
+
+This is a MS-specific request to the device, which returns a 4-byte ID.
+It is documented here: https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-xusbi/4a51d209-016b-4221-a6b6-412ea33781af
+We send a 2.2.8.5 Get_Device_ID to the device.
+
+Run: sudo python3 xusb_id.py   (or ensure write access to /dev/bus/usb/...)
 """
-import ctypes, fcntl, os, glob, struct, sys
+import ctypes
+import fcntl
+import os
+import glob
+import struct
+import sys
+import getopt
+import errno
+import json
+from typing import NamedTuple
+from typing import List
 
-USBDEVFS_CONTROL = 0xC0185500  # _IOWR('U', 0, struct usbdevfs_ctrltransfer) on x86-64
+# _IOWR('U', 0, struct usbdevfs_ctrltransfer) on x86-64
+USBDEVFS_CONTROL = 0xC0185500  
 
-def find_devices(vid="2dc8"):
+class UsbDevice(NamedTuple):
+    bus_num: str
+    dev_num: str
+    serial: str
+
+def find_devices(vid, expected_pid) -> List[UsbDevice]:
     devs = []
     for d in glob.glob("/sys/bus/usb/devices/*"):
         try:
             if open(d + "/idVendor").read().strip() == vid:
-                bus = int(open(d + "/busnum").read())
-                dev = int(open(d + "/devnum").read())
                 pid = open(d + "/idProduct").read().strip()
+
+                if expected_pid != pid:
+                    continue
+
                 try:
                     serial = open(d + "/serial").read().strip()
                 except Exception:
                     serial = "?"
-                devs.append((bus, dev, pid, serial))
+                bus = int(open(d + "/busnum").read())
+                dev = int(open(d + "/devnum").read())
+
+                device = UsbDevice(bus, dev, serial)
+                devs.append(device)
         except Exception:
             pass
     return devs
@@ -39,17 +66,72 @@ def get_xusb_id(bus, dev):
     finally:
         os.close(fd)
 
-devs = find_devices()
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "hv:p:", ["help", "vid=", "pid=", "json"])
+except getopt.GetoptError as err:
+    print(err)
+    sys.exit(2)
+
+def print_help(exit_code, error_msg):
+    print(f"Error: {error_msg}\n")
+    print("""Usage: xusb_id.py [options]
+
+Enumerates USB devices looking for the specific VID/PID combination.
+If found, it queries the device for its XUSB ID and prints it out.
+
+Options:
+    -h, --help      Print this help message and exit
+    -v, --vid       The USB VID to look for
+    -p, --pid       The USB PID to look for
+    --json          Print the output as JSON""")
+    sys.exit(exit_code)
+
+vid = None
+pid = None
+print_json = False
+
+for opt, arg in opts:
+    if opt in ("-h", "--help"):
+        print_help(0)
+    elif opt in ("-v", "--vid"):
+        vid=arg
+    elif opt in ("-p", "--pid"):
+        pid = arg
+    elif opt in ("--json"):
+        print_json = True
+
+if not vid or not pid:
+    print_help(1, "Missing VID or PID")
+
+devs = find_devices(vid, pid)
 if not devs:
     print("no 2dc8 devices found"); sys.exit(1)
-for bus, dev, pid, serial in devs:
+
+json_out = []
+for device in devs:
+    bus = device.bus_num
+    dev = device.dev_num
+    serial = device.serial
+
     try:
-        rid = get_xusb_id(bus, dev)
-        print(f"bus {bus:03d} dev {dev:03d}  pid 0x{pid}  serial {serial:12}  XUSB ID: {rid.hex()}  ({int.from_bytes(rid,'little')})")
+        xid = get_xusb_id(bus, dev)
+        if print_json:
+            dict = device._asdict()
+            dict["xid"] = xid.hex()
+            json_out.append(dict)
+        else:
+            print(f"Found device with xid: {bus:03d}:{dev:03d}")
+            print(f"serial  = {serial:12}")
+            print(f"xid     = {xid.hex()}")
+            print()
     except OSError as e:
-        import errno
         if e.errno == errno.EPIPE:
-            note = "STALL - device rejected the request (not implemented in this mode?)"
+            note = "STALL - device rejected the request"
         else:
             note = f"failed: {e}"
-        print(f"bus {bus:03d} dev {dev:03d}  pid 0x{pid}  serial {serial:12}  {note}")
+        print(f"Failed to get xid for device {bus:03d}:{dev:03d} serial={serial:12}:", file=sys.stderr)
+        print(note, file=sys.stderr)
+        sys.exit(1)
+
+if print_json:
+    print(json.dumps(json_out, indent=2))
