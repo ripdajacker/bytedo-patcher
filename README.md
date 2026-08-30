@@ -2,10 +2,14 @@
 
 Tools for patching the XUSB ID of the 8BitDo Ultimate 2C controller and their USB receivers.
 
-The repo currently has two scripts:
+You probably want to use the [browser version](https://ripdajacker.github.io/bytedo-patcher/) of the tool.
+
+The tool consists of two scripts:
 
 - `xusb_id.py` lets you send the XUSB ID request to the controller.
 - `xusb_id_patcher.py` lets you patch the XUSB ID of the stock controller and dongle firmware.
+
+Both have a web version so you can do the stuff in the browser.
 
 I have no affiliation with 8BitDo, this is just a personal project to fix an issue I had on my Xbox 360.
 
@@ -29,16 +33,17 @@ The `xusb_id_patcher.py` most likely runs fine on MacOS, WSL and maybe even on W
 I did not manage to run the updater software in Wine, so I copied the files over to a
 machine running Windows to do the actual update.
 
-## How to patch/flash (only tested on Windows)
+## How to patch/flash (latter only tested on Windows)
 
 1. Download the 8BitDo updater app and update the firmware on your controller _and_ your dongle
 2. If you run it as Administrator the firmware will be downloaded to `Config/updateFile`
 3. Firmwares have long filenames that end in `.dat`
 4. The files that are around 75kb are for the controller, the ones around 50kb are for the dongle
-5. Run `xusb_id_patcher.py` and put in your desired XUSB ID. I used the first 4 bytes of the controller serial
-6. Put the patched files back into `Config/updateFile`
-7. Flash the controller and/or dongle
-8. Enjoy multiplayer games on your Xbox 360
+5. Go to [ripdajacker.github.io/bytedo-patcher](https://ripdajacker.github.io/bytedo-patcher/) and patch the file in your browser
+6. Alternatively run  `xusb_id_patcher.py` and put in your desired XUSB ID. I used the first 4 bytes of the controller serial
+7. Put the patched files back into `Config/updateFile`
+8. Flash the controller and/or dongle
+9. Enjoy multiplayer games on your Xbox 360
 
 ## xusb_id.py
 
