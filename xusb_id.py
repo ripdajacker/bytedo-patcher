@@ -8,6 +8,7 @@ We send a 2.2.8.5 Get_Device_ID to the device.
 
 Run: sudo python3 xusb_id.py   (or ensure write access to /dev/bus/usb/...)
 """
+
 import ctypes
 import fcntl
 import os
@@ -21,12 +22,14 @@ from typing import NamedTuple
 from typing import List
 
 # _IOWR('U', 0, struct usbdevfs_ctrltransfer) on x86-64
-USBDEVFS_CONTROL = 0xC0185500  
+USBDEVFS_CONTROL = 0xC0185500
+
 
 class UsbDevice(NamedTuple):
     bus_num: str
     dev_num: str
     serial: str
+
 
 def find_devices(vid, expected_pid) -> List[UsbDevice]:
     devs = []
@@ -51,6 +54,7 @@ def find_devices(vid, expected_pid) -> List[UsbDevice]:
             pass
     return devs
 
+
 def get_xusb_id(bus, dev):
     path = f"/dev/bus/usb/{bus:03d}/{dev:03d}"
     fd = os.open(path, os.O_RDWR)
@@ -58,19 +62,23 @@ def get_xusb_id(bus, dev):
         buf = ctypes.create_string_buffer(4)
         # struct usbdevfs_ctrltransfer: u8 reqtype, u8 req, u16 val, u16 idx,
         #                               u16 len, u32 timeout, (pad), void *data
-        ctrl = (struct.pack("<BBHHHI", 0xC0, 0x01, 0x0000, 0x0000, 4, 1000)
-                + b"\0" * 4
-                + struct.pack("<Q", ctypes.addressof(buf)))
+        ctrl = (
+            struct.pack("<BBHHHI", 0xC0, 0x01, 0x0000, 0x0000, 4, 1000)
+            + b"\0" * 4
+            + struct.pack("<Q", ctypes.addressof(buf))
+        )
         fcntl.ioctl(fd, USBDEVFS_CONTROL, ctrl)
         return bytes(buf)
     finally:
         os.close(fd)
+
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "hv:p:", ["help", "vid=", "pid=", "json"])
 except getopt.GetoptError as err:
     print(err)
     sys.exit(2)
+
 
 def print_help(exit_code, error_msg):
     print(f"Error: {error_msg}\n")
@@ -86,6 +94,7 @@ Options:
     --json          Print the output as JSON""")
     sys.exit(exit_code)
 
+
 vid = None
 pid = None
 print_json = False
@@ -94,7 +103,7 @@ for opt, arg in opts:
     if opt in ("-h", "--help"):
         print_help(0)
     elif opt in ("-v", "--vid"):
-        vid=arg
+        vid = arg
     elif opt in ("-p", "--pid"):
         pid = arg
     elif opt in ("--json"):
@@ -105,7 +114,8 @@ if not vid or not pid:
 
 devs = find_devices(vid, pid)
 if not devs:
-    print("no 2dc8 devices found"); sys.exit(1)
+    print("no 2dc8 devices found")
+    sys.exit(1)
 
 json_out = []
 for device in devs:
@@ -129,7 +139,10 @@ for device in devs:
             note = "STALL - device rejected the request"
         else:
             note = f"failed: {e}"
-        print(f"Failed to get xid for device {bus:03d}:{dev:03d} serial={serial:12}:", file=sys.stderr)
+        print(
+            f"Failed to get xid for device {bus:03d}:{dev:03d} serial={serial:12}:",
+            file=sys.stderr,
+        )
         print(note, file=sys.stderr)
         sys.exit(1)
 
