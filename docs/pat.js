@@ -144,12 +144,42 @@ function parseHex(s) {
 
 // ---- UI wiring ----
 const output = document.getElementById("output");
+const deviceOutput = document.getElementById("device-output");
 let current = null; // { data, update, name }
 
 function log(msg, cls) {
     output.textContent = msg;
     output.className = cls || "";
 }
+
+function logDevice(msg, cls) {
+    deviceOutput.textContent = msg;
+    deviceOutput.className = cls || "";
+}
+
+document.getElementById("read-device").addEventListener("click", async () => {
+    logDevice("Connecting...");
+    try {
+        const info = await connectAndRead();
+        const derived = deriveXidFromSerial(info.serial);
+        const newxidEl = document.getElementById("newxid");
+        newxidEl.value = derived;
+        logDevice(
+            describeDevice(info) +
+                `\n\nTarget XID (first 4 bytes of serial): ${derived}\n` +
+                `Filled into "New XID".`
+        );
+    } catch (err) {
+        console.error(err);
+        if (err.name === "NotFoundError") {
+            logDevice("No device was selected.");
+        } else if (err.name === "SecurityError" || /Access denied/i.test(err.message)) {
+            logDevice(connectAccessDeniedMessage(err));
+        } else {
+            logDevice(`Error: ${err.message}`);
+        }
+    }
+});
 
 function describe(update, expectedId, label) {
     return (
