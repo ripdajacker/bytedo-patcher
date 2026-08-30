@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8BitDo XUSB ID</title>
+    <style>
+        body { font-family: monospace; padding: 2rem; }
+        pre { background: #f4f4f4; padding: 1rem; border-radius: 4px; }
+        .error { color: #b00020; }
+        button { font-size: 1rem; padding: 0.5rem 1rem; }
+    </style>
+</head>
+<body>
+    <h1>8BitDo XUSB ID Reader</h1>
+    <p>Queries the MS-specific Get_Device_ID request to read the 4-byte XUSB ID from the controller.</p>
+    <button id="connect">Connect to controller</button>
+    <h2>Result</h2>
+    <pre id="output">Not connected.</pre>
+
+    <script src="app.js"></script>
+</body>
+</html>
