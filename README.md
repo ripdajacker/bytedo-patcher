@@ -1,4 +1,4 @@
-# Bytedo Controller Enhancement
+# ByteDo Patcher
 
 Tools for patching the XUSB ID of the 8BitDo Ultimate 2C controller and their USB receivers.
 
