@@ -104,7 +104,7 @@ function deriveXidFromSerial(serial) {
       head = head + "F";
     }
   }
-  
+
   if (!/^[0-9a-fA-F]{8}$/.test(head)) {
     throw new Error(
       `Could not derive an XID from serial "${serial}": expected 8 hex digits at the start.`,
@@ -157,9 +157,7 @@ async function connectAndRead() {
           await device.claimInterface(iface.interfaceNumber);
           claimed.push(iface.interfaceNumber);
         } catch (e) {
-          console.warn(
-            `Could not claim interface ${iface.interfaceNumber}: ${e.message}`,
-          );
+          console.warn(`Could not claim interface ${iface.interfaceNumber}: ${e.message}`);
         }
       }
     }
