@@ -98,7 +98,7 @@ function bytesToHex(bytes) {
 function deriveXidFromSerial(serial) {
   // The XUSB ID is the first 4 bytes (8 hex chars) of the controller serial.
   const clean = (serial || "").replace(/[\s-]/g, "");
-  const head = clean.slice(0, Math.min(clean.length, 8));
+  let head = clean.slice(0, Math.min(clean.length, 8));
   if (head.length < 8) {
     for (let i = 0; i < 8 - head.length; i++) {
       head = head + "F";
