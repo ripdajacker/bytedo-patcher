@@ -192,7 +192,7 @@ function describe(update, expectedId, label) {
     );
 }
 
-document.getElementById("show").addEventListener("click", async () => {
+document.getElementById("show-details").addEventListener("click", async () => {
     try {
         const fileInput = document.getElementById("file");
         if (!fileInput.files.length) throw new Error("Choose a .dat file first.");
