@@ -235,7 +235,7 @@ document.getElementById("patch").addEventListener("click", () => {
         const base = (name || "firmware").replace(/\.dat$/i, "");
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `${base}-patched.dat`;
+        a.download = `${base}-patched-${newXid}.dat`;
         a.click();
         URL.revokeObjectURL(a.href);
     } catch (err) {
